@@ -65,13 +65,13 @@ COD 1080p low<br>
 7800x3d 4090<br>
 OBS game capture<br>
 
-![image](https://github.com/fr33thytweaks/Disable-Anti-Aliasing/assets/168888348/044d2417-d410-49f2-a099-442c679efaf5)
+![1 MW3](https://github.com/user-attachments/assets/eb88d1b9-0e1a-4c5c-a493-3b39ee75e336)
 
-![Picture1](https://github.com/user-attachments/assets/bf004ca6-2f5a-431a-a811-36419aa819a7)
+![2 2042](https://github.com/user-attachments/assets/4f2c4fb4-41e1-4986-aa70-66fb40e23d45)
 
-![Picture2](https://github.com/user-attachments/assets/00d8ce9f-9adf-42c3-b2cc-fc82ea950ce5)
+![3 2042 4k](https://github.com/user-attachments/assets/d05efdd7-f2ff-4284-98dc-34f42d46d383)
 
-<img width="493" alt="TAA VS NO TAA" src="https://github.com/user-attachments/assets/d03c8ee8-9650-423d-b8bb-2e9758fdd068">
+ <img width="493" alt="4 Comparison" src="https://github.com/user-attachments/assets/4b7d6fe0-e95a-41ad-8bed-b3c4c99d60c9">
 
 ## Video
 [Video](<https://youtu.be/xxYU2BGDlpA>)
