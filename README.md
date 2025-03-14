@@ -6,7 +6,7 @@ Use case for when native options to disable Anti-Aliasing are unavailable.<br>
 
 Original guide from [TheHybred](<https://www.reddit.com/r/MotionClarity/comments/1d206jv/disable_forced_antialiasing_with_dlss>).<br>
 More in depth DLAA/DLSS modding and information from [emoose](<https://github.com/emoose/DLSSTweaks>).<br>
-CustomSettingNames-DLSS.zip [here](<https://github.com/Orbmu2k/nvidiaProfileInspector/issues/156>). NO LONGER NEEDED<br>
+CustomSettingNames-DLSS.zip [here](<https://github.com/Orbmu2k/nvidiaProfileInspector/issues/156>). (NO LONGER NEEDED)<br>
 Info on presets [here](<https://developer.nvidia.com/blog/nvidia-dlss-updates-for-super-resolution-and-unreal-engine>).
 
 ## How It Works
