@@ -1,5 +1,14 @@
 # Disable-Anti-Aliasing
 
+## New Easy Method
+Once script to do it all <br>
+- Choose DLSS3/4
+- No need to modify or replace game files
+- Will work with anticheat or any game file protection system
+- Replace NVIDIA'S latest DLSS driver file with noTAA dev DLSS file
+- Force noTAA dev file with inspector <br> <br>
+[Disable TAA With DLSS.ps1](<https://github.com/FR33THYFR33THY/Disable-Anti-Aliasing/blob/main/Disable%20TAA%20With%20DLSS.ps1>) <br>
+
 ## Description
 Ability to disable Anti-Aliasing in modern games that support DLSS and/or DLAA.<br>
 Use case for when native options to disable Anti-Aliasing are unavailable.<br>
