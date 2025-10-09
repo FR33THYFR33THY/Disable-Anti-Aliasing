@@ -83,6 +83,6 @@ OBS game capture<br>
  <img width="493" alt="4 Comparison" src="https://github.com/user-attachments/assets/4b7d6fe0-e95a-41ad-8bed-b3c4c99d60c9">
 
 ## Video
-[Video](<https://youtu.be/xxYU2BGDlpA>)
+[Video](<https://youtu.be/8ly5JkSzr5U>)
 
-[![Video](https://img.youtube.com/vi/xxYU2BGDlpA/maxresdefault.jpg)]([https://www.youtube.com/watch?v=xxYU2BGDlpA](https://youtu.be/xxYU2BGDlpA))
+[![Video](https://img.youtube.com/vi/8ly5JkSzr5U/maxresdefault.jpg)]([https://www.youtube.com/watch?v=8ly5JkSzr5U](https://youtu.be/8ly5JkSzr5U))
