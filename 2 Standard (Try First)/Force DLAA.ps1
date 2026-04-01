@@ -1,54 +1,31 @@
-    If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
-    {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
-    Exit}
-    $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
-    $Host.UI.RawUI.BackgroundColor = "Black"
-	$Host.PrivateData.ProgressBackgroundColor = "Black"
-    $Host.PrivateData.ProgressForegroundColor = "White"
-    Clear-Host
+        # SCRIPT RUN AS ADMIN
+        If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
+        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
+        Exit}
+        $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
+        $Host.UI.RawUI.BackgroundColor = "Black"
+        $Host.PrivateData.ProgressBackgroundColor = "Black"
+        $Host.PrivateData.ProgressForegroundColor = "White"
+        Clear-Host
 
-    function Get-FileFromWeb {
-    param ([Parameter(Mandatory)][string]$URL, [Parameter(Mandatory)][string]$File)
-    function Show-Progress {
-    param ([Parameter(Mandatory)][Single]$TotalValue, [Parameter(Mandatory)][Single]$CurrentValue, [Parameter(Mandatory)][string]$ProgressText, [Parameter()][int]$BarSize = 10, [Parameter()][switch]$Complete)
-    $percent = $CurrentValue / $TotalValue
-    $percentComplete = $percent * 100
-    if ($psISE) { Write-Progress "$ProgressText" -id 0 -percentComplete $percentComplete }
-    else { Write-Host -NoNewLine "`r$ProgressText $(''.PadRight($BarSize * $percent, [char]9608).PadRight($BarSize, [char]9617)) $($percentComplete.ToString('##0.00').PadLeft(6)) % " }
-    }
-    try {
-    $request = [System.Net.HttpWebRequest]::Create($URL)
-    $response = $request.GetResponse()
-    if ($response.StatusCode -eq 401 -or $response.StatusCode -eq 403 -or $response.StatusCode -eq 404) { throw "Remote file either doesn't exist, is unauthorized, or is forbidden for '$URL'." }
-    if ($File -match '^\.\\') { $File = Join-Path (Get-Location -PSProvider 'FileSystem') ($File -Split '^\.')[1] }
-    if ($File -and !(Split-Path $File)) { $File = Join-Path (Get-Location -PSProvider 'FileSystem') $File }
-    if ($File) { $fileDirectory = $([System.IO.Path]::GetDirectoryName($File)); if (!(Test-Path($fileDirectory))) { [System.IO.Directory]::CreateDirectory($fileDirectory) | Out-Null } }
-    [long]$fullSize = $response.ContentLength
-    [byte[]]$buffer = new-object byte[] 1048576
-    [long]$total = [long]$count = 0
-    $reader = $response.GetResponseStream()
-    $writer = new-object System.IO.FileStream $File, 'Create'
-    do {
-    $count = $reader.Read($buffer, 0, $buffer.Length)
-    $writer.Write($buffer, 0, $count)
-    $total += $count
-    if ($fullSize -gt 0) { Show-Progress -TotalValue $fullSize -CurrentValue $total -ProgressText " $($File.Name)" }
-    } while ($count -gt 0)
-    }
-    finally {
-    $reader.Close()
-    $writer.Close()
-    }
-    }
+        # SCRIPT CHECK INTERNET
+        if (!(Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue)) {
+        Write-Host "Internet Connection Required`n" -ForegroundColor Red
+        Pause
+        exit
+        }
+
+        # SCRIPT SILENT
+        $progresspreference = 'silentlycontinue'
 
 Write-Host "Installing: NvidiaProfileInspector . . ."
 # check for file
-if (-Not (Test-Path -Path "$env:TEMP\Inspector.exe")) {
+if (-Not (Test-Path -Path "$env:SystemRoot\Temp\inspector.exe")) {
 # unblock drs files
 $path = "C:\ProgramData\NVIDIA Corporation\Drs"
 Get-ChildItem -Path $path -Recurse | Unblock-File
 # download inspector
-Get-FileFromWeb -URL "https://github.com/FR33THYFR33THY/files/raw/main/Inspector.exe" -File "$env:TEMP\Inspector.exe"
+IWR "https://github.com/FR33THYFR33THY/Ultimate-Files/raw/refs/heads/main/inspector.exe" -OutFile "$env:SystemRoot\Temp\inspector.exe"
 # enable nvidia legacy sharpen
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableGR535" /t REG_DWORD /d "0" /f | Out-Null
 reg add "HKLM\SYSTEM\ControlSet001\Services\nvlddmkm\Parameters\FTS" /v "EnableGR535" /t REG_DWORD /d "0" /f | Out-Null
@@ -58,18 +35,18 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\FTS" /v "Ena
 }
 Clear-Host
 
-    function show-menu {
-	Clear-Host
-    Write-Host "1. Force DLAA"
-	Write-Host "2. Default"
-	Write-Host "3. Inspector"
-	              }
-	show-menu
-    while ($true) {
-    $choice = Read-Host " "
-    if ($choice -match '^[1-3]$') {
-    switch ($choice) {
-    1 {
+        function show-menu {
+    	Clear-Host
+        Write-Host "1. Force DLAA"
+	    Write-Host "2. Default"
+	    Write-Host "3. Inspector"
+	                  }
+	    show-menu
+        while ($true) {
+        $choice = Read-Host " "
+        if ($choice -match '^[1-3]$') {
+        switch ($choice) {
+        1 {
 
 Clear-Host
 Write-Host "Force DLAA"
@@ -313,13 +290,13 @@ $MultilineComment = @"
   </Profile>
 </ArrayOfProfile>
 "@
-Set-Content -Path "$env:TEMP\ForceDLAA.nip" -Value $MultilineComment -Force
+Set-Content -Path "$env:SystemRoot\Temp\forcedlaa.nip" -Value $MultilineComment -Force
 # import config
-Start-Process -wait "$env:TEMP\Inspector.exe" -ArgumentList "$env:TEMP\ForceDLAA.nip"
+Start-Process -wait "$env:SystemRoot\Temp\inspector.exe" -ArgumentList "$env:SystemRoot\Temp\forcedlaa.nip"
 show-menu
 
-      }
-    2 {	
+          }
+        2 {	
 
 Clear-Host
 Write-Host "Default"
@@ -521,19 +498,19 @@ $MultilineComment = @"
   </Profile>
 </ArrayOfProfile>
 "@
-Set-Content -Path "$env:TEMP\Default.nip" -Value $MultilineComment -Force
+Set-Content -Path "$env:SystemRoot\Temp\default.nip" -Value $MultilineComment -Force
 # import config
-Start-Process -wait "$env:TEMP\Inspector.exe" -ArgumentList "$env:TEMP\Default.nip"
+Start-Process -wait "$env:SystemRoot\Temp\inspector.exe" -ArgumentList "$env:SystemRoot\Temp\default.nip"
 show-menu
 
-      }
-    3 {
+          }
+        3 {
 
 Clear-Host
 Write-Host "Inspector"
 # open inspector
-Start-Process -wait "$env:TEMP\Inspector.exe"
+Start-Process -wait "$env:SystemRoot\Temp\inspector.exe"
 show-menu
 
-      }
-    } } else { Write-Host "Invalid input. Please select a valid option (1-3)." } }
+          }
+        } } else { Write-Host "Invalid input. Please select a valid option (1-3)." } }

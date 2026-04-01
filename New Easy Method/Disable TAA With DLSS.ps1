@@ -1,112 +1,90 @@
-    If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
-    {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
-    Exit}
-    $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
-    $Host.UI.RawUI.BackgroundColor = "Black"
-	$Host.PrivateData.ProgressBackgroundColor = "Black"
-    $Host.PrivateData.ProgressForegroundColor = "White"
-    Clear-Host
+        # SCRIPT RUN AS ADMIN
+        If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
+        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
+        Exit}
+        $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
+        $Host.UI.RawUI.BackgroundColor = "Black"
+        $Host.PrivateData.ProgressBackgroundColor = "Black"
+        $Host.PrivateData.ProgressForegroundColor = "White"
+        Clear-Host
 
-    function Get-FileFromWeb {
-    param ([Parameter(Mandatory)][string]$URL, [Parameter(Mandatory)][string]$File)
-    function Show-Progress {
-    param ([Parameter(Mandatory)][Single]$TotalValue, [Parameter(Mandatory)][Single]$CurrentValue, [Parameter(Mandatory)][string]$ProgressText, [Parameter()][int]$BarSize = 10, [Parameter()][switch]$Complete)
-    $percent = $CurrentValue / $TotalValue
-    $percentComplete = $percent * 100
-    if ($psISE) { Write-Progress "$ProgressText" -id 0 -percentComplete $percentComplete }
-    else { Write-Host -NoNewLine "`r$ProgressText $(''.PadRight($BarSize * $percent, [char]9608).PadRight($BarSize, [char]9617)) $($percentComplete.ToString('##0.00').PadLeft(6)) % " }
-    }
-    try {
-    $request = [System.Net.HttpWebRequest]::Create($URL)
-    $response = $request.GetResponse()
-    if ($response.StatusCode -eq 401 -or $response.StatusCode -eq 403 -or $response.StatusCode -eq 404) { throw "Remote file either doesn't exist, is unauthorized, or is forbidden for '$URL'." }
-    if ($File -match '^\.\\') { $File = Join-Path (Get-Location -PSProvider 'FileSystem') ($File -Split '^\.')[1] }
-    if ($File -and !(Split-Path $File)) { $File = Join-Path (Get-Location -PSProvider 'FileSystem') $File }
-    if ($File) { $fileDirectory = $([System.IO.Path]::GetDirectoryName($File)); if (!(Test-Path($fileDirectory))) { [System.IO.Directory]::CreateDirectory($fileDirectory) | Out-Null } }
-    [long]$fullSize = $response.ContentLength
-    [byte[]]$buffer = new-object byte[] 1048576
-    [long]$total = [long]$count = 0
-    $reader = $response.GetResponseStream()
-    $writer = new-object System.IO.FileStream $File, 'Create'
-    do {
-    $count = $reader.Read($buffer, 0, $buffer.Length)
-    $writer.Write($buffer, 0, $count)
-    $total += $count
-    if ($fullSize -gt 0) { Show-Progress -TotalValue $fullSize -CurrentValue $total -ProgressText " $($File.Name)" }
-    } while ($count -gt 0)
-    }
-    finally {
-    $reader.Close()
-    $writer.Close()
-    }
-    }
+        # SCRIPT CHECK INTERNET
+        if (!(Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue)) {
+        Write-Host "Internet Connection Required`n" -ForegroundColor Red
+        Pause
+        exit
+        }
 
-    function Show-ModernFilePicker {
-    param(
-    [ValidateSet('Folder', 'File')]
-    $Mode,
-    [string]$fileType,
-    [string]$InitialDirectory = ([Environment]::GetFolderPath('Desktop'))
-    )
-    if ($Mode -eq 'Folder') {
-    $Title = 'Select Folder'
-    $modeOption = $false
-    $Filter = "Folders|`n"
-    } else {
-    $Title = 'Select File'
-    $modeOption = $true
-    if ($fileType) {
-    $Filter = "$fileType Files (*.$fileType) | *.$fileType|All files (*.*)|*.*"
-    } else {
-    $Filter = 'All Files (*.*)|*.*'
-    }
-    }
-    Add-Type -AssemblyName System.Windows.Forms
-    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-    $OpenFileDialog.AddExtension = $modeOption
-    $OpenFileDialog.CheckFileExists = $modeOption
-    $OpenFileDialog.DereferenceLinks = $true
-    $OpenFileDialog.Filter = $Filter
-    $OpenFileDialog.Multiselect = $false
-    $OpenFileDialog.Title = $Title
-    if (Test-Path $InitialDirectory) {
-    $OpenFileDialog.InitialDirectory = $InitialDirectory
-    } else {
-    $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
-    }
-    if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-    return $OpenFileDialog.FileName
-    } else {
-    return $null
-    }
-    }
+        # SCRIPT SILENT
+        $progresspreference = 'silentlycontinue'
 
-    # choose dlss 3 or 4 file
-    Write-Host "1. DLSS v3"
-    Write-Host "2. DLSS v4"
-    Write-Host ""
-    # select
-    $dlssver = Read-Host -Prompt "DLSS Version?"
-    Clear-Host
-    # map choice
-    switch ($dlssver) {
-    "1" {$dlsschoice = "https://github.com/FR33THYFR33THY/Disable-Anti-Aliasing/raw/refs/heads/main/4%20DLSS%20Files/DLSS%203/nvngx_dlss.dll"}
-    "2" {$dlsschoice = "https://github.com/FR33THYFR33THY/Disable-Anti-Aliasing/raw/refs/heads/main/4%20DLSS%20Files/DLSS%204/nvngx_dlss.dll"}
-    default {
-    Write-Host "Invalid input . . ." -ForegroundColor Red
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit
-    }
-    }
+        # FUNCTION SHOW MODERN FILE PICKER
+        function Show-ModernFilePicker {
+        param(
+        [ValidateSet('Folder', 'File')]
+        $Mode,
+        [string]$fileType,
+        [string]$InitialDirectory = ([Environment]::GetFolderPath('Desktop'))
+        )
+        if ($Mode -eq 'Folder') {
+        $Title = 'Select Folder'
+        $modeOption = $false
+        $Filter = "Folders|`n"
+        } else {
+        $Title = 'Select File'
+        $modeOption = $true
+        if ($fileType) {
+        $Filter = "$fileType Files (*.$fileType) | *.$fileType|All files (*.*)|*.*"
+        } else {
+        $Filter = 'All Files (*.*)|*.*'
+        }
+            }
+        Add-Type -AssemblyName System.Windows.Forms
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.AddExtension = $modeOption
+        $OpenFileDialog.CheckFileExists = $modeOption
+        $OpenFileDialog.DereferenceLinks = $true
+        $OpenFileDialog.Filter = $Filter
+        $OpenFileDialog.Multiselect = $false
+        $OpenFileDialog.Title = $Title
+        if (Test-Path $InitialDirectory) {
+        $OpenFileDialog.InitialDirectory = $InitialDirectory
+        } else {
+        $OpenFileDialog.InitialDirectory = [Environment]::GetFolderPath('Desktop')
+        }
+        if ($OpenFileDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        return $OpenFileDialog.FileName
+        } else {
+        return $null
+        }
+        }
+
+        # choose dlss 3 or 4 file
+        Write-Host "1. DLSS v3"
+        Write-Host "2. DLSS v4"
+        Write-Host ""
+        # select
+        $dlssver = Read-Host -Prompt "DLSS Version?"
+        Clear-Host
+        # map choice
+        switch ($dlssver) {
+        "1" {$dlsschoice = "https://github.com/FR33THYFR33THY/Disable-Anti-Aliasing/raw/refs/heads/main/4%20DLSS%20Files/DLSS%203/nvngx_dlss.dll"}
+        "2" {$dlsschoice = "https://github.com/FR33THYFR33THY/Disable-Anti-Aliasing/raw/refs/heads/main/4%20DLSS%20Files/DLSS%204/nvngx_dlss.dll"}
+        default {
+        Write-Host "Invalid input . . ." -ForegroundColor Red
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit
+        }
+        }
 	
 Write-Host "Installing: NvidiaProfileInspector . . ."
 # check for file
-if (-Not (Test-Path -Path "$env:TEMP\Inspector.exe")) {
+if (-Not (Test-Path -Path "$env:SystemRoot\Temp\inspector.exe")) {
 # unblock drs files
 $path = "C:\ProgramData\NVIDIA Corporation\Drs"
 Get-ChildItem -Path $path -Recurse | Unblock-File
 # download inspector
-Get-FileFromWeb -URL "https://github.com/FR33THYFR33THY/files/raw/main/Inspector.exe" -File "$env:TEMP\Inspector.exe"
+IWR "https://github.com/FR33THYFR33THY/Ultimate-Files/raw/refs/heads/main/inspector.exe" -OutFile "$env:SystemRoot\Temp\inspector.exe"
 # enable nvidia legacy sharpen
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableGR535" /t REG_DWORD /d "0" /f | Out-Null
 reg add "HKLM\SYSTEM\ControlSet001\Services\nvlddmkm\Parameters\FTS" /v "EnableGR535" /t REG_DWORD /d "0" /f | Out-Null
@@ -116,22 +94,23 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\FTS" /v "Ena
 }
 Clear-Host
 
-    function show-menu {
-	Clear-Host
-    Write-Host "1. Disable TAA"
-	Write-Host "2. Revert (Default)"
-    Write-Host "3. DLSS Overlay On"
-    Write-Host "4. DLSS Overlay Off (Default)"
-	Write-Host "5. Read Only"
-	Write-Host "6. Inspector"
-	Write-Host ""
-	              }
-	show-menu
-    while ($true) {
-    $choice = Read-Host " "
-    if ($choice -match '^[1-6]$') {
-    switch ($choice) {
-    1 {
+        # FUNCTION SHOW MENU
+        function show-menu {
+	    Clear-Host
+        Write-Host "1. Disable TAA"
+	    Write-Host "2. Revert (Default)"
+        Write-Host "3. DLSS Overlay On"
+        Write-Host "4. DLSS Overlay Off (Default)"
+	    Write-Host "5. Read Only"
+	    Write-Host "6. Inspector"
+	    Write-Host ""
+	                  }
+    	show-menu
+        while ($true) {
+        $choice = Read-Host " "
+        if ($choice -match '^[1-6]$') {
+        switch ($choice) {
+        1 {
 
 Clear-Host
 Write-Host "Disable TAA"
@@ -385,9 +364,9 @@ $MultilineComment = @"
   </Profile>
 </ArrayOfProfile>
 "@
-Set-Content -Path "$env:TEMP\DisableTAA.nip" -Value $MultilineComment -Force
+Set-Content -Path "$env:SystemRoot\Temp\disabletaa.nip" -Value $MultilineComment -Force
 # import config
-Start-Process -wait "$env:TEMP\Inspector.exe" -ArgumentList "$env:TEMP\DisableTAA.nip"
+Start-Process -wait "$env:SystemRoot\Temp\inspector.exe" -ArgumentList "$env:SystemRoot\Temp\disabletaa.nip"
 # select dlss file to replace
 Write-Host "" 
 Write-Host "Open the folder with the highest number, open files folder then select the XXX_XXXXXXX.bin file" -ForegroundColor Red
@@ -408,8 +387,8 @@ Write-Host "ctl+alt+f6 x2 = JITTER_DEBUG_JITTER . . ." -ForegroundColor Red
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 show-menu
 
-      }
-    2 {
+          }
+        2 {
 
 Clear-Host
 Write-Host "Revert (Default)"
@@ -615,9 +594,9 @@ $MultilineComment = @"
   </Profile>
 </ArrayOfProfile>
 "@
-Set-Content -Path "$env:TEMP\Revert.nip" -Value $MultilineComment -Force
+Set-Content -Path "$env:SystemRoot\Temp\revert.nip" -Value $MultilineComment -Force
 # import config
-Start-Process -wait "$env:TEMP\Inspector.exe" -ArgumentList "$env:TEMP\Revert.nip"
+Start-Process -wait "$env:SystemRoot\Temp\inspector.exe" -ArgumentList "$env:SystemRoot\Temp\revert.nip"
 # select dlss file to revert
 Write-Host ""
 Write-Host "Select the XXX_XXXXXXX.bin backup file here" -ForegroundColor Red
@@ -635,8 +614,9 @@ Clear-Host
 Write-Host "Revert (Default) . . ."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 show-menu
-      }
-    3 {
+
+          }
+        3 {
 
 Clear-Host
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\NGXCore" /v "ShowDlssIndicator" /t REG_DWORD /d "1024" /f | Out-Null
@@ -644,8 +624,8 @@ Write-Host "DLSS Overlay: On . . ."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 show-menu
 
-      }
-    4 {
+          }
+        4 {
 		
 Clear-Host
 cmd.exe /c "reg delete `"HKLM\SOFTWARE\NVIDIA Corporation\Global\NGXCore`" /v `"ShowDlssIndicator`" /f >nul 2>&1"
@@ -653,8 +633,8 @@ Write-Host "DLSS Overlay: Off (Default) . . ."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 show-menu
 
-      }
-    5 {
+          }
+        5 {
 
 Clear-Host
 # read only nvdrsdb0.bin
@@ -668,8 +648,8 @@ Write-Host "Press any key to continue . . ."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 show-menu
 
-      }
-    6 {
+          }
+        6 {
 
 Clear-Host
 Write-Host "Inspector"
@@ -678,8 +658,8 @@ Set-ItemProperty -Path "$env:SystemDrive\ProgramData\NVIDIA Corporation\Drs\nvdr
 # revert read only nvdrsdb1.bin
 Set-ItemProperty -Path "$env:SystemDrive\ProgramData\NVIDIA Corporation\Drs\nvdrsdb1.bin" -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue | Out-Null
 # open inspector
-Start-Process -wait "$env:TEMP\Inspector.exe"
+Start-Process -wait "$env:SystemRoot\Temp\inspector.exe"
 show-menu
 
-      }
-    } } else { Write-Host "Invalid input. Please select a valid option (1-6)." } }
+          }
+        } } else { Write-Host "Invalid input. Please select a valid option (1-6)." } }
